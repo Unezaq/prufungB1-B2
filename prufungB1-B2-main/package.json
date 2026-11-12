@@ -1,0 +1,15 @@
+{
+  "name": "telc-b1-b2-prep",
+  "version": "1.1.0",
+  "description": "TELC B1/B2 Exam Preparation Platform",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "audit": "node tools/audit-quizzes.js",
+    "audit:publish": "node tools/patch-quiz-pages.js && node tools/build-registry.js && node tools/audit-quizzes.js"
+  },
+  "keywords": ["telc", "b1", "b2", "german", "exam"],
+  "author": "",
+  "license": "ISC"
+}

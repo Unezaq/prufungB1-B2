@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TELC Prep — Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link rel="stylesheet" href="/app.css"/>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="mobile-nav" id="mobileNav"></div>
+
+    <!-- Topbar -->
+    <div class="dashboard-topbar">
+      <div>
+        <h1 id="dashGreeting">Bonjour</h1>
+        <div class="subtitle" id="dashSubtitle">Préparez votre examen TELC B1/B2</div>
+      </div>
+      <div class="dashboard-actions">
+        <a class="btn primary" href="/library.html"><i class="fas fa-play"></i> Commencer</a>
+        <a class="btn" href="/simulator.html"><i class="fas fa-stopwatch"></i> Simulateur</a>
+      </div>
+    </div>
+
+    <!-- Welcome card -->
+    <div class="glass card welcome-card">
+      <div class="welcome-header">
+        <div class="welcome-avatar"><i class="fas fa-user-graduate"></i></div>
+        <div>
+          <div class="welcome-title">Bienvenue<span id="dashName"></span></div>
+          <div class="welcome-sub">Votre progression TELC B1/B2 en un coup d'œil</div>
+        </div>
+      </div>
+      <div class="welcome-stats">
+        <div class="welcome-stat"><div class="ws-value" id="wsQuizzes">0</div><div class="ws-label">Quiz terminés</div></div>
+        <div class="welcome-stat"><div class="ws-value" id="wsAttempts">0</div><div class="ws-label">Tentatives</div></div>
+        <div class="welcome-stat"><div class="ws-value" id="wsAccuracy">0%</div><div class="ws-label">Précision moyenne</div></div>
+        <div class="welcome-stat"><div class="ws-value" id="wsMistakes">0</div><div class="ws-label">Erreurs sauvées</div></div>
+      </div>
+    </div>
+
+    <!-- Main dashboard grid -->
+    <div class="dashboard-grid">
+
+      <!-- Left: large column -->
+      <div class="dash-col-left">
+
+        <!-- Skills overview -->
+        <div class="glass card">
+          <div class="card-head">
+            <h2>Aperçu des compétences</h2>
+            <span class="badge" id="dashLevelBadge">B1</span>
+          </div>
+          <div class="skills-row">
+            <div class="skill-chart">
+              <div class="skill-title">B1 — Lesen · Hören · Sprachbausteine</div>
+              <canvas id="chartB1"></canvas>
+            </div>
+            <div class="skill-chart">
+              <div class="skill-title">B2 — Lesen · Hören · Sprachbausteine</div>
+              <canvas id="chartB2"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Continue learning -->
+        <div class="glass card continue-card">
+          <div class="card-head">
+            <h2>Reprendre l'apprentissage</h2>
+          </div>
+          <div id="continueBox" class="continue-empty empty">
+            <i class="fas fa-book-open"></i>
+            <div>Aucune activité pour le moment. Commencez un quiz.</div>
+          </div>
+          <div id="continueContent" style="display:none;">
+            <div class="continue-item">
+              <div class="continue-info">
+                <div class="continue-title" id="contTitle">—</div>
+                <div class="continue-meta" id="contMeta">—</div>
+              </div>
+              <a class="btn primary continue-btn" id="contBtn"><i class="fas fa-play"></i> Reprendre</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right: small column -->
+      <div class="dash-col-right">
+
+        <!-- Recommended -->
+        <div class="glass card">
+          <div class="card-head"><h2>Étape suivante recommandée</h2></div>
+          <div id="recommendBox" class="empty">
+            <i class="fas fa-lightbulb"></i>
+            <div>Chargez une recommandation…</div>
+          </div>
+          <div id="recommendContent" style="display:none;">
+            <div class="rec-item">
+              <div class="rec-info">
+                <div class="rec-title" id="recTitle">—</div>
+                <div class="rec-meta" id="recMeta">—</div>
+              </div>
+              <button class="btn primary" id="recBtn"><i class="fas fa-play"></i> Commencer</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weakness detection -->
+        <div class="glass card">
+          <div class="card-head"><h2>Points à améliorer</h2></div>
+          <div id="weaknessBox" class="empty">
+            <i class="fas fa-triangle-exclamation"></i>
+            <div>Terminez plus de quiz pour détecter vos faiblesses.</div>
+          </div>
+          <div id="weaknessContent" style="display:none;">
+            <div class="weak-list" id="weakList"></div>
+          </div>
+        </div>
+
+        <!-- Recent activity -->
+        <div class="glass card">
+          <div class="card-head"><h2>Activité récente</h2></div>
+          <div id="recentBox" class="empty">
+            <i class="fas fa-clock"></i>
+            <div>Aucune activité récente.</div>
+          </div>
+          <div id="recentContent" style="display:none;">
+            <table class="table">
+              <thead><tr><th>Quiz</th><th>Niveau</th><th>Score</th><th>Date</th></tr></thead>
+              <tbody id="recentTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script src="/app.js"></script>
+<script>
+(async function(){
+  await loadRegistry();
+  renderSidebar('dashboard');
+  renderMobileNav('dashboard');
+
+  // Greeting by time
+  const h = new Date().getHours();
+  let greet = 'Bonjour';
+  if (h < 12) greet = 'Bonjour';
+  else if (h < 18) greet = 'Bonne après-midi';
+  else greet = 'Bonsoir';
+  document.getElementById('dashGreeting').textContent = greet;
+
+  const stats = computeStats();
+  // Welcome stats
+  document.getElementById('wsQuizzes').textContent = stats.completedQuizzes;
+  document.getElementById('wsAttempts').textContent = stats.total;
+  document.getElementById('wsAccuracy').textContent = stats.avgAcc.toFixed(1) + '%';
+  document.getElementById('wsMistakes').textContent = Store.getMistakes().length;
+
+  // Continue learning
+  const last = Store.getLastOpened();
+  const contBox = document.getElementById('continueBox');
+  const contContent = document.getElementById('continueContent');
+  if (last) {
+    const q = quizById(last.id) || last;
+    contBox.style.display = 'none';
+    contContent.style.display = 'block';
+    document.getElementById('contTitle').textContent = q.title || last.title;
+    document.getElementById('contMeta').textContent = (q.level||last.level) + ' · ' + (q.category||last.category);
+    document.getElementById('contBtn').onclick = () => openQuiz(q);
+  } else {
+    contBox.style.display = 'block';
+    contContent.style.display = 'none';
+  }
+
+  // Recommend
+  const rec = recommendNext();
+  const rbox = document.getElementById('recommendBox');
+  const rcontent = document.getElementById('recommendContent');
+  if (rec) {
+    rbox.style.display = 'none';
+    rcontent.style.display = 'block';
+    document.getElementById('recTitle').textContent = rec.title;
+    document.getElementById('recMeta').textContent = rec.level + ' · ' + rec.category;
+    document.getElementById('recBtn').onclick = () => openQuiz(rec);
+  } else {
+    rbox.style.display = 'block';
+    rcontent.style.display = 'none';
+  }
+
+  // Skills charts
+  function renderSkills(canvasId, level) {
+    const byCat = {};
+    stats.attempts.filter(a=>a.level===level).forEach(a=>{
+      const k = a.category;
+      if(!byCat[k]) byCat[k]={score:0,total:0};
+      byCat[k].score+=a.score||0; byCat[k].total+=a.total||0;
+    });
+    const keys = Object.keys(byCat);
+    const data = {};
+    keys.forEach(k=>{ data[k] = byCat[k].total ? (byCat[k].score/byCat[k].total*100) : 0; });
+    drawBarChart(document.getElementById(canvasId), data);
+  }
+  renderSkills('chartB1','B1');
+  renderSkills('chartB2','B2');
+
+  // Weakness
+  const weak = weakestCategories(4);
+  const wbox = document.getElementById('weaknessBox');
+  const wcontent = document.getElementById('weaknessContent');
+  const wlist = document.getElementById('weakList');
+  if (weak.length) {
+    wbox.style.display = 'none';
+    wcontent.style.display = 'block';
+    wlist.innerHTML = weak.map(w=>`
+      <div class="weak-item">
+        <div class="weak-info">
+          <div class="weak-name">${w.name}</div>
+          <div class="weak-pct">${w.accuracy.toFixed(0)}%</div>
+        </div>
+        <div class="weak-progress"><div style="width:${w.accuracy}%"></div></div>
+      </div>
+    `).join('');
+  } else {
+    wbox.style.display = 'block';
+    wcontent.style.display = 'none';
+  }
+
+  // Recent activity
+  const recent = stats.attempts.slice(-8).reverse();
+  const rbox2 = document.getElementById('recentBox');
+  const rcontent2 = document.getElementById('recentContent');
+  const tbody = document.getElementById('recentTableBody');
+  if (recent.length) {
+    rbox2.style.display = 'none';
+    rcontent2.style.display = 'block';
+    tbody.innerHTML = recent.map(a=>`<tr>
+      <td>${a.title}</td><td><span class="badge ${a.level.toLowerCase()}">${a.level}</span></td>
+      <td>${a.score}/${a.total}</td><td>${new Date(a.date).toLocaleDateString()}</td>
+    </tr>`).join('');
+  } else {
+    rbox2.style.display = 'block';
+    rcontent2.style.display = 'none';
+  }
+
+  window.addEventListener('resize', ()=>{
+    drawBarChart(document.getElementById('chartB1'), getChartData('B1'));
+    drawBarChart(document.getElementById('chartB2'), getChartData('B2'));
+  });
+  function getChartData(level){
+    const byCat = {};
+    stats.attempts.filter(a=>a.level===level).forEach(a=>{
+      const k=a.category; if(!byCat[k]) byCat[k]={s:0,t:0};
+      byCat[k].s+=a.score||0; byCat[k].t+=a.total||0;
+    });
+    const out={}; Object.keys(byCat).forEach(k=>{ out[k]=byCat[k].t?(byCat[k].s/byCat[k].t*100):0; });
+    return out;
+  }
+})();
+</script>
+</body>
+</html>

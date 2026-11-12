@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Bereich</title>
+  <!--
+    Dies ist eine einfache Administrationsseite, die nur für Benutzer
+    mit der Rolle "admin" sichtbar sein soll. Sie bietet Platzhalter für
+    zukünftige Verwaltungsfunktionen wie Benutzerverwaltung oder QUIZES-
+    Verwaltung. Über den Button am Ende gelangt man zurück zur Startseite.
+  -->
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+    .header {
+      background-color: #007BFF;
+      color: #ffffff;
+      padding: 15px;
+      text-align: center;
+      font-size: 24px;
+    }
+    .container {
+      padding: 30px;
+    }
+    .card {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+    .card h3 {
+      margin-top: 0;
+    }
+    .link-button {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: #ffffff;
+      border-radius: 5px;
+      text-decoration: none;
+      transition: background-color 0.2s;
+    }
+    .link-button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+<link rel="stylesheet" href="/telc.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body>
+  <div class="header">Admin Bereich</div>
+  <div class="container">
+    <div class="card">
+      <h3>Benutzerverwaltung</h3>
+      <p>Hier können Sie Benutzer hinzufügen, bearbeiten oder löschen. (Noch nicht implementiert)</p>
+    </div>
+    <div class="card">
+      <h3>QUIZES-Management</h3>
+      <p>Verwalten Sie die QUIZESseiten oder fügen Sie neue hinzu. (Noch nicht implementiert)</p>
+    </div>
+    <a class="link-button" href="/home">Zurück zur Homepage</a>
+  </div>
+<script src="/telc-sets.js"></script><script src="/telc.js"></script>
+</body>
+</html>

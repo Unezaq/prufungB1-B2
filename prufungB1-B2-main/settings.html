@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TELC Prep — Settings</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link rel="stylesheet" href="/app.css"/>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="mobile-nav" id="mobileNav"></div>
+    <div class="topbar"><div><h1>Settings</h1><div class="subtitle">Manage your local data</div></div></div>
+    <div class="glass card" style="max-width:600px;">
+      <h2>Data Management</h2>
+      <p style="color:var(--text-muted);font-size:14px;">All progress is stored locally in your browser.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px;">
+        <button class="btn danger" id="clearAttempts"><i class="fas fa-trash"></i> Clear attempts</button>
+        <button class="btn danger" id="clearMistakes"><i class="fas fa-trash"></i> Clear mistakes</button>
+        <button class="btn danger" id="clearAll"><i class="fas fa-trash"></i> Clear all data</button>
+      </div>
+      <div style="margin-top:24px;">
+        <h3>Export Data</h3>
+        <button class="btn" id="exportBtn"><i class="fas fa-download"></i> Download JSON</button>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script src="/app.js"></script>
+<script>
+(async function(){
+  await loadRegistry();
+  renderSidebar('settings'); renderMobileNav('settings');
+  document.getElementById('clearAttempts').onclick = () => { if(confirm('Clear attempts?')){ localStorage.setItem('telc_attempts','[]'); toast('Cleared'); } };
+  document.getElementById('clearMistakes').onclick = () => { if(confirm('Clear mistakes?')){ localStorage.setItem('telc_mistakes','[]'); toast('Cleared'); } };
+  document.getElementById('clearAll').onclick = () => { if(confirm('Clear ALL data?')){ localStorage.clear(); toast('Cleared'); } };
+  document.getElementById('exportBtn').onclick = () => {
+    const data = { attempts: Store.getAttempts(), mistakes: Store.getMistakes(), lastOpened: Store.getLastOpened(), goals: Store.getGoals() };
+    const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='telc-data.json'; a.click();
+    URL.revokeObjectURL(url);
+  };
+})();
+</script>
+</body>
+</html>

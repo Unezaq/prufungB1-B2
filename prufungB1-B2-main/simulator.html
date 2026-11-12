@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TELC Prep — Exam Simulator</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link rel="stylesheet" href="/app.css"/>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="mobile-nav" id="mobileNav"></div>
+    <div class="topbar"><div><h1>Exam Simulator</h1><div class="subtitle">Practice under time pressure</div></div></div>
+    <div class="glass card" style="margin-bottom:16px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end;">
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);">Level</label>
+          <select class="select" id="simLevel"><option value="B1">B1</option><option value="B2">B2</option></select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);">Number of quizzes</label>
+          <select class="select" id="simCount"><option value="3">3</option><option value="5" selected>5</option><option value="8">8</option></select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);">Time (min)</label>
+          <select class="select" id="simTime"><option value="15">15</option><option value="30" selected>30</option><option value="45">45</option></select>
+        </div>
+        <button class="btn primary" id="startBtn"><i class="fas fa-play"></i> Start Exam</button>
+      </div>
+    </div>
+    <div id="examArea"></div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script src="/app.js"></script>
+<script>
+(async function(){
+  await loadRegistry();
+  renderSidebar('simulator'); renderMobileNav('simulator');
+  let timerInterval = null;
+  document.getElementById('startBtn').onclick = () => {
+    const level = document.getElementById('simLevel').value;
+    const count = parseInt(document.getElementById('simCount').value,10);
+    const minutes = parseInt(document.getElementById('simTime').value,10);
+    const pool = REGISTRY.filter(q=>q.level===level && q.exists);
+    const chosen = [];
+    const copy = pool.slice();
+    for (let i=0;i<count && copy.length;i++) {
+      const idx = Math.floor(Math.random()*copy.length);
+      chosen.push(copy.splice(idx,1)[0]);
+    }
+    let remaining = minutes*60;
+    const area = document.getElementById('examArea');
+    area.innerHTML = `
+      <div class="glass card" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
+        <div><strong>Exam in progress</strong> · ${level} · ${chosen.length} quizzes</div>
+        <div class="telc-timer" id="simTimer">⏱ ${String(Math.floor(remaining/60)).padStart(2,'0')}:${String(remaining%60).padStart(2,'0')}</div>
+      </div>
+      ${chosen.map((q,i)=>`
+        <div class="glass card" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+          <div><strong>${i+1}. ${q.title}</strong><div style="font-size:12px;color:var(--text-muted);">${q.category}</div></div>
+          <a class="btn primary" href="/QUIZES/${q.file}" target="_blank"><i class="fas fa-external-link-alt"></i> Open</a>
+        </div>
+      `).join('')}
+      <div style="text-align:center;margin-top:16px;">
+        <button class="btn danger" id="finishBtn"><i class="fas fa-flag-checkered"></i> Finish Exam</button>
+      </div>
+    `;
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      remaining--;
+      const el = document.getElementById('simTimer');
+      if (!el) { clearInterval(timerInterval); return; }
+      el.textContent = '⏱ ' + String(Math.floor(Math.max(remaining,0)/60)).padStart(2,'0') + ':' + String(Math.max(remaining,0)%60).padStart(2,'0');
+      if (remaining <= 0) { clearInterval(timerInterval); toast('Time is up!'); }
+    }, 1000);
+    document.getElementById('finishBtn').onclick = () => {
+      clearInterval(timerInterval);
+      area.innerHTML = '<div class="glass card empty"><i class="fas fa-flag-checkered"></i><div>Exam finished. Review your attempts in Analytics.</div></div>';
+    };
+  };
+})();
+</script>
+</body>
+</html>

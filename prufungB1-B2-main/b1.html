@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TELC Prep — B1 Preparation</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link rel="stylesheet" href="/app.css"/>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="mobile-nav" id="mobileNav"></div>
+    <div class="topbar"><div><h1>B1 Preparation</h1><div class="subtitle">All B1 quizzes by category</div></div></div>
+    <div id="content"></div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script src="/app.js"></script>
+<script>
+(async function(){
+  await loadRegistry();
+  renderSidebar('b1'); renderMobileNav('library');
+  const list = REGISTRY.filter(q=>q.level==='B1' && q.exists);
+  const byCat = {};
+  list.forEach(q=>{ if(!byCat[q.category]) byCat[q.category]=[]; byCat[q.category].push(q); });
+  const done = new Set(Store.getAttempts().map(a=>a.quizId));
+  const content = document.getElementById('content');
+  content.innerHTML = Object.keys(byCat).map(cat=>`
+    <div class="glass card" style="margin-bottom:16px;">
+      <h2>${cat}</h2>
+      <div class="grid grid-3">
+        ${byCat[cat].map(q=>`
+          <div class="quiz-card">
+            <div class="title">${q.title}</div>
+            <div class="meta">${levelBadge(q.level)} ${done.has(q.id)?'<span class="badge done">Done</span>':''}</div>
+            <button class="btn primary" data-id="${q.id}"><i class="fas fa-play"></i> ${done.has(q.id)?'Retry':'Start'}</button>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+  content.querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ const q=quizById(b.dataset.id); if(q) openQuiz(q); }; });
+})();
+</script>
+</body>
+</html>

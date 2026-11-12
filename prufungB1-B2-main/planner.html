@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TELC Prep — Study Planner</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link rel="stylesheet" href="/app.css"/>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="mobile-nav" id="mobileNav"></div>
+    <div class="topbar"><div><h1>Study Planner</h1><div class="subtitle">Daily goals and recommendations</div></div></div>
+    <div class="grid grid-2" style="margin-bottom:16px;">
+      <div class="glass card">
+        <h2>Daily Goal</h2>
+        <p style="color:var(--text-muted);font-size:14px;">Set how many quizzes you want to complete per day.</p>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <input class="input" id="goalInput" type="number" min="1" max="20" style="width:100px;"/>
+          <button class="btn primary" id="saveGoal">Save</button>
+        </div>
+        <div style="margin-top:16px;">
+          <div style="font-size:13px;color:var(--text-muted);">Today's progress</div>
+          <div class="progress" style="margin-top:6px;"><div id="todayBar" style="width:0%"></div></div>
+          <div style="font-size:12px;margin-top:4px;" id="todayText"></div>
+        </div>
+      </div>
+      <div class="glass card">
+        <h2>Recommended Practice</h2>
+        <div id="recList" class="empty"><i class="fas fa-lightbulb"></i><div>Loading…</div></div>
+      </div>
+    </div>
+    <div class="glass card">
+      <h2>Weakest Areas to Focus</h2>
+      <div id="focusBox" class="empty"><i class="fas fa-bullseye"></i><div>Complete quizzes to see focus areas.</div></div>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script src="/app.js"></script>
+<script>
+(async function(){
+  await loadRegistry();
+  renderSidebar('planner'); renderMobileNav('planner');
+  const goals = Store.getGoals();
+  const gi = document.getElementById('goalInput'); gi.value = goals.daily || 5;
+  document.getElementById('saveGoal').onclick = () => { Store.setGoals({ daily: parseInt(gi.value,10)||5 }); toast('Goal saved'); updateToday(); };
+  function updateToday() {
+    const today = new Date().toDateString();
+    const attempts = Store.getAttempts().filter(a=> new Date(a.date).toDateString()===today);
+    const g = Store.getGoals().daily || 5;
+    const pct = Math.min(100, (attempts.length / g) * 100);
+    document.getElementById('todayBar').style.width = pct + '%';
+    document.getElementById('todayText').textContent = `${attempts.length} / ${g} quizzes today`;
+  }
+  updateToday();
+
+  // Recommended list: weakest categories first, then random uncompleted
+  const weak = weakestCategories(3);
+  const done = new Set(Store.getAttempts().map(a=>a.quizId));
+  const recs = [];
+  weak.forEach(w => {
+    const catName = w.name.split(' · ')[1];
+    const lvl = w.name.split(' · ')[0];
+    const q = REGISTRY.find(x=>x.exists && x.level===lvl && x.category===catName && !done.has(x.id));
+    if (q) recs.push(q);
+  });
+  while (recs.length < 5) {
+    const pool = REGISTRY.filter(q=>q.exists && !done.has(q.id) && !recs.find(r=>r.id===q.id));
+    if (!pool.length) break;
+    recs.push(pool[Math.floor(Math.random()*pool.length)]);
+  }
+  if (recs.length) {
+    const box = document.getElementById('recList'); box.classList.remove('empty');
+    box.innerHTML = recs.map(q=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--glass-border);">
+        <div><div style="font-weight:600;font-size:14px;">${q.title}</div><div style="font-size:12px;color:var(--text-muted);">${q.level} · ${q.category}</div></div>
+        <button class="btn" data-id="${q.id}"><i class="fas fa-play"></i></button>
+      </div>
+    `).join('');
+    box.querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ const q=quizById(b.dataset.id); if(q) openQuiz(q); }; });
+  }
+
+  const w = weakestCategories(5);
+  if (w.length) {
+    const fb = document.getElementById('focusBox'); fb.classList.remove('empty');
+    fb.innerHTML = w.map(x=>`
+      <div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;"><span>${x.name}</span><span>${x.accuracy.toFixed(0)}%</span></div>
+        <div class="progress"><div style="width:${x.accuracy}%"></div></div>
+      </div>
+    `).join('');
+  }
+})();
+</script>
+</body>
+</html>

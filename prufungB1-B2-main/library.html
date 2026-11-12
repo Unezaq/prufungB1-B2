@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TELC Prep — Quiz Library</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link rel="stylesheet" href="/app.css"/>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="mobile-nav" id="mobileNav"></div>
+    <div class="topbar">
+      <div>
+        <h1>Quiz Library</h1>
+        <div class="subtitle">All existing TELC quizzes</div>
+      </div>
+    </div>
+    <div class="glass card" style="margin-bottom:16px;">
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;">
+        <input class="input" id="searchInput" placeholder="Search by title..."/>
+        <select class="select" id="levelFilter"><option value="all">All levels</option><option value="B1">B1</option><option value="B2">B2</option></select>
+        <select class="select" id="catFilter"><option value="all">All categories</option></select>
+        <select class="select" id="statusFilter"><option value="all">All status</option><option value="done">Completed</option><option value="todo">Not done</option></select>
+      </div>
+    </div>
+    <div id="quizGrid" class="grid grid-3"></div>
+    <div id="emptyState" class="empty" style="display:none;"><i class="fas fa-search"></i><div>No quizzes match your filters.</div></div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script src="/app.js"></script>
+<script>
+(async function(){
+  await loadRegistry();
+  renderSidebar('library');
+  renderMobileNav('library');
+
+  const done = new Set(Store.getAttempts().map(a=>a.quizId));
+  const catFilter = document.getElementById('catFilter');
+  const cats = [...new Set(REGISTRY.map(q=>q.category))].sort();
+  cats.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; catFilter.appendChild(o); });
+
+  function render() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const lvl = document.getElementById('levelFilter').value;
+    const cat = document.getElementById('catFilter').value;
+    const st = document.getElementById('statusFilter').value;
+    let list = REGISTRY.filter(x=>x.exists);
+    if (q) list = list.filter(x=>x.title.toLowerCase().includes(q) || x.category.toLowerCase().includes(q));
+    if (lvl !== 'all') list = list.filter(x=>x.level===lvl);
+    if (cat !== 'all') list = list.filter(x=>x.category===cat);
+    if (st === 'done') list = list.filter(x=>done.has(x.id));
+    if (st === 'todo') list = list.filter(x=>!done.has(x.id));
+    const grid = document.getElementById('quizGrid');
+    if (!list.length) { grid.innerHTML=''; document.getElementById('emptyState').style.display='block'; return; }
+    document.getElementById('emptyState').style.display='none';
+    grid.innerHTML = list.map(x=>`
+      <div class="quiz-card">
+        <div class="title">${x.title}</div>
+        <div class="meta">${levelBadge(x.level)} <span class="badge">${x.category}</span> ${done.has(x.id)?'<span class="badge done">Done</span>':''}</div>
+        <div style="font-size:12px;color:var(--text-muted);">ID: ${x.id}</div>
+        <button class="btn primary" data-id="${x.id}"><i class="fas fa-play"></i> ${done.has(x.id)?'Retry':'Start'}</button>
+      </div>
+    `).join('');
+    grid.querySelectorAll('button').forEach(b=>{
+      b.onclick = () => { const q = quizById(b.dataset.id); if (q) openQuiz(q); };
+    });
+  }
+  document.getElementById('searchInput').addEventListener('input', render);
+  document.getElementById('levelFilter').addEventListener('change', render);
+  document.getElementById('catFilter').addEventListener('change', render);
+  document.getElementById('statusFilter').addEventListener('change', render);
+  render();
+})();
+</script>
+</body>
+</html>
